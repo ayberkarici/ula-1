@@ -1,0 +1,8 @@
+# Django
+db.sqlite3
+__pycache__/
+*.py[cod]
+*.sqlite3-journal
+
+# If you have a virtualenv
+venv/

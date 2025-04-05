@@ -1,0 +1,27 @@
+{% extends "livability/base.html" %}
+
+{% block title %}HOME{% endblock title %}
+
+{% block content %}
+    {% include "livability/partials/slider.html" %}
+  
+  <!-- Modal -->
+  <div class="modal  fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+            <h1 class="modal-title fs-5" id="exampleModalLabel">KVKK info & Cookies</h1>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+            <p>How we collect data and how we process it...</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <a href="{% url "livability:survey" %}" type="button" class="btn btn-primary">Save changes</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+{% endblock content %}

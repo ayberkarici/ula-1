@@ -1,0 +1,39 @@
+{% extends "livability/base.html" %}
+{% load static %}
+
+{% block title %}Results{% endblock title %}
+
+{% block content %}
+<div class="container py-5" style="min-height: 80vh;">
+    <h2 class="text-center mb-4">Top 5 Livable Cities</h2>
+
+    <div class="row justify-content-center">
+        <div class="col-md-8 position-relative">
+            <div class="accordion" id="cityAccordion">
+
+                {% for city in cities %}
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="heading{{ forloop.counter }}">
+                        <button class="accordion-button {% if forloop.first %} {% else %}collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ forloop.counter }}" aria-expanded="{% if forloop.first %}true{% else %}false{% endif %}" aria-controls="collapse{{ forloop.counter }}">
+                            {{ forloop.counter }}. {{ city.name }}
+                        </button>
+                    </h2>
+                    <div id="collapse{{ forloop.counter }}" class="accordion-collapse collapse {% if forloop.first %} show{% endif %}" aria-labelledby="heading{{ forloop.counter }}" data-bs-parent="#cityAccordion">
+                        <div class="accordion-body">
+                            {{ city.description }}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+
+            </div>
+
+            <!-- Devamını Gör Butonu -->
+            <div class="text-end mt-3">
+                <a href="{% url 'livability:more_results' %}" class="btn btn-outline-primary">Devamını Gör</a>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock content %}
