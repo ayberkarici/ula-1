@@ -140,3 +140,38 @@ def overall_list(request):
     # Sırala
     rankings = sorted(avg_scores.items(), key=lambda x: x[1], reverse=True)
     return render(request, "livability/overall_list.html", {"rankings": rankings})
+
+
+from django.conf import settings
+import os
+import pandas as pd
+
+def load_scores_from_project_folder(request):
+
+    folder_path = os.path.join(settings.BASE_DIR, "data/excels")
+    from livability.models import Category, CityLivabilityScore
+    from django.contrib import messages
+
+    for file_name in os.listdir(folder_path):
+        if file_name.endswith(".xlsx"):
+            category_name = os.path.splitext(file_name)[0]
+            file_path = os.path.join(folder_path, file_name)
+
+            try:
+                df = pd.read_excel(file_path)
+                category, _ = Category.objects.get_or_create(name=category_name)
+                CityLivabilityScore.objects.filter(category=category).delete()
+
+                for _, row in df.iterrows():
+                    CityLivabilityScore.objects.create(
+                        city_name=row["Şehir İsmi"],
+                        value=row["Değer"],
+                        category=category
+                    )
+                messages.success(request, f"{file_name} yüklendi.")
+            except Exception as e:
+                messages.error(request, f"{file_name} yüklenemedi: {e}")
+
+    from django.contrib import messages
+    messages.success(request, "Excel dosyaları başarıyla yüklendi.")
+    return redirect("livability:home")
