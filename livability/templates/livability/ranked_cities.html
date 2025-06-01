@@ -1,0 +1,96 @@
+{% extends "livability/base.html" %}
+{% block content %}
+<div class="container mt-5">
+  <h2 class="text-center mb-4">Şehir Sıralaması (TOPSIS Sonuçları)</h2>
+
+  {% if consistency_ratio is not None %}
+    <div class="alert alert-info text-center mb-4" style="max-width: 500px; margin: 0 auto; font-size: 1.15rem;">
+      <strong>Consistency Ratio (CR):</strong>
+      <span style="color: {% if consistency_ratio > 0.2 %}#dc3545{% else %}#198754{% endif %}; font-weight: bold;">
+        {{ consistency_ratio|floatformat:3 }}
+      </span>
+      {% if consistency_ratio > 0.2 %}
+        <span class="ms-2 text-danger">(Yüksek! Sonuçlar güvenilir olmayabilir.)</span>
+      {% endif %}
+    </div>
+  {% endif %}
+
+  {% if rankings %}
+  <style>
+    .gradient-bar {
+      background: linear-gradient(90deg, #00c6ff, #0072ff);
+      animation: fillBar 1.4s ease forwards;
+    }
+    @keyframes fillBar {
+      from { width: 0%; }
+      to { width: var(--target-width); }
+    }
+  </style>
+  <table class="table table-hover table-bordered shadow-sm">
+    <thead class="table-light">
+      <tr class="text-center">
+        <th scope="col">Sıra</th>
+        <th scope="col">Şehir</th>
+        <th scope="col">TOPSIS Skoru</th>
+        <th scope="col">Görsel (%)</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for city, score in rankings %}
+      <tr class="text-center">
+        <td>
+          {% if forloop.first %}
+            🥇
+          {% elif forloop.counter == 2 %}
+            🥈
+          {% elif forloop.counter == 3 %}
+            🥉
+          {% else %}
+            {{ forloop.counter }}
+          {% endif %}
+        </td>
+        <td>
+          {{ city }}
+          {% if forloop.first %}
+            <span class="badge bg-success ms-2">En Yüksek</span>
+          {% elif forloop.counter <= 3 %}
+            <span class="badge bg-primary ms-2">Top {{ forloop.counter }}</span>
+          {% endif %}
+        </td>
+        <td>{{ score|floatformat:4 }}</td>
+        <td>
+          <div class="progress" style="height: 20px;">
+            <div class="progress-bar gradient-bar" role="progressbar"
+                 style="--target-width: {{ score|floatformat:2|stringformat:'f' }}%;"
+                 aria-valuenow="{{ score|floatformat:2 }}" aria-valuemin="0" aria-valuemax="1">
+              {{ score|floatformat:2 }}
+            </div>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <div class="text-center mt-4">
+    <a href="{% url 'livability:fahp_pairs' %}" class="btn btn-outline-primary btn-lg">Testi Tekrar Çöz</a>
+  </div>
+  {% else %}
+  <div class="alert alert-warning text-center">
+    Henüz bir sıralama bulunmuyor. Lütfen önce kriter karşılaştırmalarını tamamlayınız.
+  </div>
+  {% endif %}
+</div>
+<script>
+  window.addEventListener("load", () => {
+    document.querySelectorAll(".js-score-bar").forEach(bar => {
+      const rawScore = parseFloat(bar.dataset.score);
+      if (!isNaN(rawScore)) {
+        const percent = (rawScore * 100).toFixed(2);
+        bar.style.width = percent + "%";
+        bar.setAttribute("aria-valuenow", percent);
+        bar.textContent = percent + "%";
+      }
+    });
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,76 @@
+{% extends "livability/base.html" %}
+{% load static %}
+{% block content %}
+<style>
+  body {
+    background: #f0f2f5;
+    color: #333;
+  }
+
+  .animated-card {
+    animation: fadeIn 0.6s ease-out;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    padding: 2rem;
+  }
+
+  .btn-futuristic {
+    background: linear-gradient(90deg, #0ff, #09f);
+    color: #fff;
+    font-weight: bold;
+    border: none;
+    transition: all 0.4s ease;
+    box-shadow: 0 0 10px #0ff;
+  }
+
+  .btn-futuristic:hover {
+    background: linear-gradient(90deg, #09f, #0ff);
+    transform: scale(1.05);
+    box-shadow: 0 0 20px #0ff;
+  }
+
+  label {
+    font-weight: 600;
+    color: #333;
+  }
+
+  input {
+    border-radius: 6px !important;
+    border: 1px solid #ccc;
+    padding: 10px;
+    width: 100%;
+  }
+
+  .text-danger {
+    font-size: 0.875rem;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+
+<div class="container d-flex justify-content-center align-items-center" style="min-height: 90vh;">
+  <div class="card p-4 animated-card" style="width: 100%; max-width: 450px;">
+    <h3 class="text-center mb-4">Kayıt Ol</h3>
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {% for field in form %}
+      <div class="mb-3">
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% if field.errors %}
+          <div class="text-danger small">{{ field.errors|striptags }}</div>
+        {% endif %}
+      </div>
+      {% endfor %}
+      <button type="submit" class="btn btn-futuristic w-100 mt-3">Kayıt Ol</button>
+    </form>
+    <div class="text-center mt-3">
+      <small>Zaten hesabınız var mı? <a href="{% url 'login' %}" class="text-info">Giriş Yap</a></small>
+    </div>
+  </div>
+</div>
+{% endblock %}

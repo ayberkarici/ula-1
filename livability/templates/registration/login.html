@@ -1,0 +1,59 @@
+{% extends 'livability/base.html' %}
+{% load form_extras %}
+{% block content %}
+<style>
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .animated-card {
+    animation: fadeIn 1s ease-out;
+    background: rgba(20, 20, 30, 0.95);
+    border: 1px solid rgba(100, 255, 255, 0.2);
+    box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
+    border-radius: 12px;
+  }
+
+  .btn-futuristic {
+    background: linear-gradient(90deg, #0ff, #09f);
+    color: #fff;
+    font-weight: bold;
+    border: none;
+    transition: all 0.4s ease;
+    box-shadow: 0 0 10px #0ff;
+  }
+
+  .btn-futuristic:hover {
+    background: linear-gradient(90deg, #09f, #0ff);
+    transform: scale(1.05);
+    box-shadow: 0 0 20px #0ff;
+  }
+</style>
+
+<div class="container d-flex justify-content-center align-items-center" style="min-height: 80vh;">
+  <div class="card p-4 shadow animated-card" style="width: 100%; max-width: 400px;">
+    <h4 class="text-center mb-4 text-white">Giriş Yap</h4>
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {% if form.errors %}
+        <div class="alert alert-danger" role="alert">
+          Hatalı kullanıcı adı veya şifre. Lütfen tekrar deneyin.
+        </div>
+      {% endif %}
+      <div class="form-group mb-3">
+        <label for="id_username" class="text-white">Kullanıcı Adı</label>
+        {{ form.username|add_class:"form-control" }}
+      </div>
+      <div class="form-group mb-4">
+        <label for="id_password" class="text-white">Şifre</label>
+        {{ form.password|add_class:"form-control" }}
+      </div>
+      <button type="submit" class="btn btn-futuristic w-100">Giriş</button>
+    </form>
+    <div class="mt-3 text-center">
+      <small><a href="#" class="text-info">Şifremi unuttum</a></small>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends "livability/base.html" %}
+{% block content %}
+<div class="container mt-5">
+  <h2 class="text-center mb-4">Top Cities (Genel Sıralama)</h2>
+  {% if rankings %}
+    <table class="table table-hover table-bordered shadow-sm">
+      <thead class="table-light">
+        <tr class="text-center">
+          <th scope="col">Sıra</th>
+          <th scope="col">Şehir</th>
+          <th scope="col">TOPSIS Skoru</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for city, score in rankings %}
+        <tr class="text-center">
+          <td>{{ forloop.counter }}</td>
+          <td>{{ city }}</td>
+          <td>{{ score|floatformat:4 }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <div class="alert alert-warning text-center">
+      Yeterli veri yok. Lütfen önce testi çözün.
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

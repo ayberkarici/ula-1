@@ -1,0 +1,245 @@
+{% extends 'livability/base.html' %}
+{% block content %}
+<style>
+  .fade-in-card {
+    animation: fadeIn 0.5s ease-in-out;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .slider-label {
+    font-weight: bold;
+    font-size: 1.1rem;
+    margin-top: 10px;
+    text-align: center;
+    transition: opacity 0.3s ease;
+  }
+  .progress-bar {
+    transition: width 0.5s ease-in-out;
+  }
+  #done {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .confetti-emoji {
+    font-size: 5rem;
+    animation: popin 0.8s ease;
+  }
+  @keyframes popin {
+    from { transform: scale(0); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+  .confetti {
+    position: fixed;
+    top: -2rem;
+    font-size: 1.2rem;
+    animation: fall 3s linear forwards;
+  }
+  @keyframes fall {
+    to {
+      transform: translateY(100vh) rotateZ(360deg);
+      opacity: 0;
+    }
+  }
+</style>
+
+<div class="container mt-5">
+
+  <div class="progress mb-4">
+    <div id="progress-bar" class="progress-bar bg-info" role="progressbar" style="width: 0%">0%</div>
+  </div>
+
+  <div id="fahp-card" class="card p-4 shadow-sm fade-in-card">
+    <h5 id="pair-title" class="mb-4 text-center"></h5>
+    <form id="fuzzy-form">
+      {% csrf_token %}
+      <input type="hidden" name="category1" id="cat1">
+      <input type="hidden" name="category2" id="cat2">
+      <input type="hidden" name="value_l">
+      <input type="hidden" name="value_m">
+      <input type="hidden" name="value_u">
+
+      <label for="importanceRange" class="form-label">Hangisi daha önemli?</label>
+      <input type="range" class="form-range" min="0" max="4" value="2" id="importanceRange">
+      <div id="rangeLabel" class="slider-label">Eşit derecede önemli</div>
+
+      <button type="submit" class="btn btn-primary w-100 mt-4" id="next-button" disabled>Kaydet ve Sonraki</button>
+      <button type="button" id="back-button" class="btn btn-outline-secondary w-100 mt-2">Geri Dön</button>
+    </form>
+  </div>
+
+  <div id="done" class="text-center mt-5" style="display:none;">
+    <div id="confetti-container">
+      <div class="confetti-emoji">🎉</div>
+      <h2 class="mt-3">Tüm karşılaştırmalar tamamlandı!</h2>
+    </div>
+    <a href="{% url 'livability:show_ranked_cities' %}" class="btn btn-success mt-4" id="results-button" style="display: none;">
+      Şehir Sıralamasını Gör
+    </a>
+    <a href="{% url 'livability:fahp_pairs' %}" class="btn btn-outline-primary mt-3">
+      Testi Tekrar Çöz
+    </a>
+  </div>
+</div>
+
+{{ pairs|json_script:"pair-data" }}
+{{ category_map|json_script:"category-ids" }}
+<script>
+  const fuzzyScale = [
+    { label: "{A} çok daha önemli", L: 4, M: 5, U: 6 },
+    { label: "{A} daha önemli", L: 2, M: 3, U: 4 },
+    { label: "Eşit derecede önemli", L: 1, M: 1, U: 1 },
+    { label: "{B} daha önemli", L: 1/4, M: 1/3, U: 1/2 },
+    { label: "{B} çok daha önemli", L: 1/6, M: 1/5, U: 1/4 }
+  ];
+
+  const pairs = JSON.parse(document.getElementById("pair-data").textContent);
+  const categoryIdMap = JSON.parse(document.getElementById("category-ids").textContent);
+  console.log(pairs);
+  let index = 0;
+  let previousAnswers = [];
+
+  const nextButton = document.getElementById("next-button");
+
+  function updateProgress() {
+    let percent;
+    if (index >= pairs.length) {
+      percent = 100;
+    } else {
+      percent = Math.round((index / pairs.length) * 100);
+    }
+    const bar = document.getElementById("progress-bar");
+    bar.style.width = percent + "%";
+    bar.innerText = percent + "%";
+  }
+
+  function launchConfetti() {
+    for (let i = 0; i < 40; i++) {
+      const conf = document.createElement("div");
+      conf.className = "confetti";
+      conf.innerText = "🎉";
+      conf.style.left = Math.random() * 100 + "vw";
+      conf.style.animationDelay = (Math.random() * 2) + "s";
+      document.body.appendChild(conf);
+      setTimeout(() => conf.remove(), 4000);
+    }
+  }
+
+  function loadNextPair() {
+    if (index >= pairs.length) {
+      updateProgress();
+      document.getElementById("fahp-card").style.display = "none";
+      document.getElementById("done").style.display = "flex";
+      launchConfetti();
+      document.getElementById("results-button").style.display = "inline-block";
+      return;
+    }
+    const [cat1, cat2] = pairs[index];
+    const cat1Id = categoryIdMap[cat1];
+    const cat2Id = categoryIdMap[cat2];
+    console.log("Current pair:", cat1, cat2);
+    console.log("Resolved IDs:", cat1Id, cat2Id);
+    document.getElementById("cat1").value = cat1Id;
+    document.getElementById("cat2").value = cat2Id;
+    document.getElementById("pair-title").innerText = `"${cat1}" mı yoksa "${cat2}" mı daha önemli?`;
+
+    const previousValue = previousAnswers[index] ?? 2;
+    document.getElementById("importanceRange").value = previousValue;
+    updateFuzzyValues(previousValue, cat1, cat2);
+    updateProgress();
+
+    // track current pair for slider
+    document.getElementById("importanceRange").dataset.cat1 = cat1;
+    document.getElementById("importanceRange").dataset.cat2 = cat2;
+
+    nextButton.disabled = true;
+    if (document.getElementById("importanceRange").value != "") {
+      nextButton.disabled = false;
+    }
+  }
+
+  function updateFuzzyValues(pos, cat1, cat2) {
+    const fz = fuzzyScale[pos];
+    document.querySelector("input[name='value_l']").value = fz.L.toFixed(4);
+    document.querySelector("input[name='value_m']").value = fz.M.toFixed(4);
+    document.querySelector("input[name='value_u']").value = fz.U.toFixed(4);
+    const label = document.getElementById("rangeLabel");
+    label.style.opacity = 0;
+    setTimeout(() => {
+      label.innerText = fz.label.replace("{A}", cat1).replace("{B}", cat2);
+      label.style.opacity = 1;
+    }, 150);
+  }
+
+  document.getElementById("importanceRange").addEventListener("input", function() {
+    updateFuzzyValues(this.value, this.dataset.cat1, this.dataset.cat2);
+    nextButton.disabled = false;
+  });
+
+  document.getElementById("fuzzy-form").addEventListener("submit", function(e) {
+    e.preventDefault();
+    const form = new FormData(this);
+    previousAnswers[index] = document.getElementById("importanceRange").value;
+    fetch("{% url 'livability:save_fuzzy_pair_ajax' %}", {
+      method: "POST",
+      headers: { 'X-CSRFToken': form.get("csrfmiddlewaretoken") },
+      body: form
+    })
+    .then(res => {
+      if (!res.ok) {
+        // Handle 400 Bad Request or other errors gracefully
+        return res.json().then(data => {
+          throw data;
+        }).catch(() => {
+          throw {status: 'error', message: 'Bir hata oluştu. Lütfen tekrar deneyin.'};
+        });
+      }
+      return res.json();
+    })
+    .then(data => {
+      if (data.status === "complete") {
+        index += 1;
+        this.reset();
+        if (data.consistency_error) {
+          document.getElementById("fahp-card").style.display = "none";
+          document.getElementById("done").style.display = "flex";
+          document.getElementById("confetti-container").innerHTML = `
+            <div class="confetti-emoji">❗️</div>
+            <h2 class="mt-3 text-danger">Consistency Ratio çok yüksek!</h2>
+            <p>Testi tekrar çözmelisiniz.</p>
+          `;
+          document.getElementById("results-button").style.display = "none";
+        } else {
+          loadNextPair();
+        }
+      } else if (data.status === "ok") {
+        index += 1;
+        this.reset();
+        loadNextPair();
+      }
+    })
+    .catch(err => {
+          document.getElementById("fahp-card").style.display = "none";
+          document.getElementById("done").style.display = "flex";
+          document.getElementById("confetti-container").innerHTML = `
+            <div class="confetti-emoji">❗️</div>
+            <h2 class="mt-3 text-danger">Consistency Ratio çok yüksek!</h2>
+            <p>Testi tekrar çözmelisiniz.</p>
+          `;
+          document.getElementById("results-button").style.display = "none";
+    });
+    nextButton.disabled = true;
+  });
+
+  document.getElementById("back-button").addEventListener("click", function() {
+    if (index > 0) {
+      index -= 1;
+      loadNextPair();
+    }
+  });
+
+  loadNextPair();
+</script>
+{% endblock %}

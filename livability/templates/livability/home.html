@@ -3,25 +3,178 @@
 {% block title %}HOME{% endblock title %}
 
 {% block content %}
-    {% include "livability/partials/slider.html" %}
-  
-  <!-- Modal -->
-  <div class="modal  fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content">
-        <div class="modal-header">
-            <h1 class="modal-title fs-5" id="exampleModalLabel">KVKK info & Cookies</h1>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+<style>
+  #preloader {
+    position: fixed;
+    z-index: 9999;
+    background-color: #fff;
+    top: 0; left: 0;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: opacity 0.5s ease, visibility 0.5s ease;
+  }
+
+  #preloader.fade-out {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    display: none;
+  }
+
+  .hero-wrapper {
+    max-width: 100vw;
+    overflow: hidden;
+  }
+
+  .hero-bg {
+    background: url('https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80') center center / cover no-repeat;
+    min-height: 100vh;
+  }
+
+  [class*="col-"] {
+    animation: fadeInUp 0.6s ease forwards;
+    opacity: 0;
+  }
+
+  @keyframes fadeInUp {
+    0% { opacity: 0; transform: translateY(40px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+</style>
+
+<!-- Preloader -->
+<div id="preloader">
+  <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+    <span class="visually-hidden">Yükleniyor...</span>
+  </div>
+</div>
+
+<div class="hero-wrapper">
+  <section class="hero-bg d-flex align-items-center justify-content-center text-center text-white">
+    <div class="bg-dark bg-opacity-50 p-5 rounded shadow" style="max-width: 600px; width: 90%;">
+      <h1 class="display-5 fw-bold">Yaşanabilirlik Testine Hoş Geldiniz</h1>
+      <p class="lead mt-3 mb-4">Kendi kriterlerinize göre şehirleri değerlendirin. Başlamak için hemen kaydolun veya giriş yapın.</p>
+      {% if not user.is_authenticated %}
+        <a href="{% url 'register' %}" class="btn btn-outline-light btn-lg me-3">Kayıt Ol</a>
+        <a href="{% url 'login' %}" class="btn btn-primary btn-lg">Giriş Yap</a>
+      {% else %}
+        <h4 class="mt-3">Hoş geldin, {{ user.username }} 👋</h4>
+        <a href="{% url 'logout' %}" class="btn btn-danger btn-sm mt-2 mb-3">Çıkış Yap</a><br>
+        <a href="{% url 'livability:fahp_pairs' %}" class="btn btn-success btn-lg mt-2">Teste Başla</a>
+      {% endif %}
+    </div>
+  </section>
+
+  <!-- Info Sections -->
+  <section class="py-5 bg-light">
+    <div class="container">
+      <div class="row text-center">
+        <div class="col-md-4 mb-4">
+          <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body">
+              <img src="https://cdn-icons-png.flaticon.com/512/3075/3075977.png" alt="Bilimsel Yaklaşım" style="height: 60px;" class="mb-3">
+              <h5 class="card-title">Bilimsel Yaklaşım</h5>
+              <p class="card-text">Karar verme süreçlerinde F-AHP ve TOPSIS gibi çok kriterli analiz yöntemlerini kullanıyoruz.</p>
+            </div>
+          </div>
         </div>
-        <div class="modal-body">
-            <p>How we collect data and how we process it...</p>
+        <div class="col-md-4 mb-4">
+          <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body">
+              <img src="https://cdn-icons-png.flaticon.com/512/1688/1688973.png" alt="Kişiselleştirme" style="height: 60px;" class="mb-3">
+              <h5 class="card-title">Kişiselleştirilmiş Sonuçlar</h5>
+              <p class="card-text">Sadece sana özel kriterlerine göre şehirler sıralanır. Kontrol tamamen sende.</p>
+            </div>
+          </div>
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-          <a href="{% url "livability:survey" %}" type="button" class="btn btn-primary">Save changes</a>
+        <div class="col-md-4 mb-4">
+          <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body">
+              <img src="https://cdn-icons-png.flaticon.com/512/3209/3209265.png" alt="Veri" style="height: 60px;" class="mb-3">
+              <h5 class="card-title">Veriye Dayalı</h5>
+              <p class="card-text">Tüm şehir verileri kamu kaynaklarından alınarak güncel ve doğru şekilde işlenmektedir.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+<!-- FAQ Section -->
+<section class="py-5 bg-white">
+  <div class="container">
+    <h3 class="text-center mb-4">Sıkça Sorulan Sorular</h3>
+    <div class="accordion" id="faqAccordion">
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="q1">
+          <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#a1">
+            Bu testin amacı nedir ve bana nasıl yardımcı olur?
+          </button>
+        </h2>
+        <div id="a1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+          <div class="accordion-body">
+            Yaşanabilirlik Testi, bireylerin kendi yaşam önceliklerine göre şehirleri değerlendirebilmesini sağlar.
+            Eğitim, sağlık, güvenlik, çevre gibi farklı kriterleri kendi öneminize göre ağırlıklandırarak sizin için en uygun şehirleri sıralar.
+            Bilimsel karar verme teknikleri kullanılarak sonuçlar oluşturulur.
+          </div>
+        </div>
+      </div>
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="q2">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#a2">
+            Hangi veri kaynakları kullanılıyor ve veriler ne kadar güncel?
+          </button>
+        </h2>
+        <div id="a2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+          <div class="accordion-body">
+            Veriler Türkiye İstatistik Kurumu (TÜİK), Çevre ve Şehircilik Bakanlığı, Sağlık Bakanlığı gibi kamu kaynaklarından alınmaktadır.
+            Sistem, bu kaynaklardaki en güncel verilerle çalışır ve zaman içinde güncellemelerle iyileştirilir.
+            Bu sayede analizler doğruluğunu ve geçerliliğini korur.
+          </div>
+        </div>
+      </div>
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="q3">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#a3">
+            Testi kaç kez çözebilirim ve önceki cevaplarım ne olur?
+          </button>
+        </h2>
+        <div id="a3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+          <div class="accordion-body">
+            Sistemde giriş yaptıktan sonra testi istediğiniz kadar tekrar çözebilirsiniz.
+            Her seferinde önceki karşılaştırmalarınız temizlenir ve yeni cevaplarınıza göre şehirler yeniden sıralanır.
+            Bu sayede farklı senaryoları deneyimleyebilir ve karşılaştırmalı analiz yapabilirsiniz.
+          </div>
         </div>
       </div>
     </div>
   </div>
+</section>
 
+
+<!-- Sample Result Section -->
+<section class="py-5 bg-light">
+  <div class="container text-center">
+    <h3 class="mb-4">Örnek Sonuç</h3>
+    <p class="lead">Senin kriterlerine göre en yaşanabilir şehir: <strong>Eskişehir</strong></p>
+    <div class="progress mx-auto" style="max-width: 500px; height: 25px;">
+      <div class="progress-bar bg-success" role="progressbar" style="width: 89%">89%</div>
+    </div>
+  </div>
+</section>
+
+<script>
+  window.addEventListener('load', () => {
+    const preloader = document.getElementById("preloader");
+    preloader.classList.add("fade-out");
+    if (typeof getCookie === "function" && !getCookie("kvkk_accepted")) {
+      if (typeof myModal !== "undefined" && myModal.show) {
+        myModal.show();
+      }
+    }
+  });
+</script>
 {% endblock content %}
