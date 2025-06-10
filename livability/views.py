@@ -253,10 +253,11 @@ def save_fuzzy_test_result(request):
                 result_json={city: float(score) for city, score in rankings}
             )
             # --- GENEL SIRALAMA AGGREGATE ---
-            from livability.models import UserTestResult, OverallCityRanking
-            from django.db.models import Avg
             # Her şehir için tüm kullanıcıların son test skorlarının ortalamasını hesapla
-            latest_results = UserTestResult.objects.order_by('user', '-created_at').distinct('user')
+            from django.db.models import OuterRef, Subquery, Max
+            # Get latest result id per user
+            latest_ids = UserTestResult.objects.values('user').annotate(latest_id=Max('id')).values_list('latest_id', flat=True)
+            latest_results = UserTestResult.objects.filter(id__in=latest_ids)
             city_scores = {}
             for result in latest_results:
                 for c, score in result.result_json.items():
