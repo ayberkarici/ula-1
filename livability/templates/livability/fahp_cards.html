@@ -129,11 +129,17 @@
 
   function loadNextPair() {
     if (index >= pairs.length) {
-      updateProgress();
-      document.getElementById("fahp-card").style.display = "none";
-      document.getElementById("done").style.display = "flex";
-      launchConfetti();
-      document.getElementById("results-button").style.display = "inline-block";
+      // Tüm karşılaştırmalar bittiğinde sonucu kaydet
+      fetch("{% url 'livability:save_fuzzy_test_result' %}", {
+        method: "POST",
+        headers: { 'X-CSRFToken': document.querySelector('input[name=csrfmiddlewaretoken]').value },
+      }).then(res => res.json()).then(data => {
+        // Sonuç kaydedildi, kullanıcıya göster
+        document.getElementById("fahp-card").style.display = "none";
+        document.getElementById("done").style.display = "flex";
+        launchConfetti();
+        document.getElementById("results-button").style.display = "inline-block";
+      });
       return;
     }
     const [cat1, cat2] = pairs[index];

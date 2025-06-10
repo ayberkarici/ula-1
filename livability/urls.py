@@ -10,4 +10,8 @@ urlpatterns = [
     path("rankings/", views.show_ranked_cities, name="show_ranked_cities"),
     path('overall-list/', views.overall_list, name='overall_list'),
     path("load-scores/", views.load_scores_from_project_folder, name="load_scores"),
+    path('tech-stack/', views.tech_stack, name='tech_stack'),
+    path('veri-toplama/', views.how_we_collect, name='how_we_collect'),
+    path('save-test-result/', views.save_fuzzy_test_result, name='save_fuzzy_test_result'),
+    path('city-category-detail/', views.city_category_detail, name='city_category_detail'),
 ]

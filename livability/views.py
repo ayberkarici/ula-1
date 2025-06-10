@@ -6,11 +6,14 @@ from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 from itertools import combinations
 from livability.models import CityLivabilityScore, Category
-from .models import CategoryFuzzyComparison, CityLivabilityScore
+from .models import CategoryFuzzyComparison, CityLivabilityScore, UserTestResult, OverallCityRanking
 from .forms import CategoryFuzzyComparisonForm
 from itertools import combinations
 from django.http import JsonResponse
+from .models import FuzzyWeight
 import unicodedata
+from django.db import transaction
+from django.core.cache import cache
 
 @login_required
 def fahp_pairwise_ui(request):
@@ -33,7 +36,66 @@ def fahp_pairwise_ui(request):
     })
 
 def index(request):
-    return render(request, 'livability/home.html')
+    # İlk kullanıcı girişinde veri yükleme kontrolü
+    if not cache.get('data_loaded'):
+        from livability.models import CityLivabilityScore
+        if not CityLivabilityScore.objects.exists():
+            from .views import load_scores_from_project_folder
+            with transaction.atomic():
+                load_scores_from_project_folder(request)
+            cache.set('data_loaded', True, timeout=None)
+        else:
+            cache.set('data_loaded', True, timeout=None)
+    # Şehirlerin kategori önceliklerini infografik için hazırla
+    from livability.models import UserProfile, FuzzyWeight, Category
+    import json
+    city_category_top = []
+    all_cities = set(UserProfile.objects.values_list('city', flat=True))
+    categories = list(Category.objects.all().order_by('name'))
+    category_names = [cat.name for cat in categories]
+    # For each city, aggregate user priorities
+    for city in sorted(all_cities):
+        users = UserProfile.objects.filter(city=city).values_list('user', flat=True)
+        if not users:
+            city_category_top.append({
+                'city': city,
+                'categories': [],
+                'no_data': True
+            })
+            continue
+        # category_id -> [defuzzified_weight, ...]
+        cat_weights = {cat.id: [] for cat in categories}
+        for user_id in users:
+            for fw in FuzzyWeight.objects.filter(user_id=user_id):
+                defuzz = (fw.weight_l + fw.weight_m + fw.weight_u) / 3
+                cat_weights[fw.category_id].append(defuzz)
+        # Calculate average for each category
+        cat_avg = []
+        for cat in categories:
+            vals = cat_weights[cat.id]
+            if vals:
+                avg = sum(vals) / len(vals)
+                cat_avg.append((cat.name, avg))
+        if cat_avg:
+            # Sort by avg descending, take top 3
+            cat_avg = sorted(cat_avg, key=lambda x: -x[1])[:3]
+            city_category_top.append({
+                'city': city,
+                'categories': cat_avg,
+                'no_data': False
+            })
+        else:
+            city_category_top.append({
+                'city': city,
+                'categories': [],
+                'no_data': True
+            })
+    # If no cities at all, show empty
+    if not city_category_top:
+        city_category_top = None
+    # Limit to max 6 cities for homepage
+    city_category_top_home = city_category_top[:6] if city_category_top else None
+    return render(request, 'livability/home.html', {'city_category_top': city_category_top_home})
 
 
 @login_required
@@ -86,59 +148,47 @@ def save_fuzzy_pair_ajax(request):
 
 @login_required
 def show_ranked_cities(request):
-    rankings = apply_topsis(request.user)
-    # Consistency Ratio hesapla
-    categories = list(Category.objects.values_list("id", flat=True))
-    n = len(categories)
-    comparisons = CategoryFuzzyComparison.objects.filter(user=request.user)
-    matrix = [[(1.0, 1.0, 1.0) for _ in range(n)] for _ in range(n)]
-    category_index = {cat.id: idx for idx, cat in enumerate(Category.objects.all().order_by("name"))}
-    for comp in comparisons:
-        i, j = category_index[comp.category1.id], category_index[comp.category2.id]
-        matrix[i][j] = (comp.value_l, comp.value_m, comp.value_u)
-        matrix[j][i] = (1/comp.value_u, 1/comp.value_m, 1/comp.value_l)
-    cr = calculate_consistency_ratio(matrix) if comparisons else None
+    # Kullanıcının en son test sonucunu çek
+    last_result = UserTestResult.objects.filter(user=request.user).order_by('-created_at').first()
+    rankings = None
+    cr = None
+    if last_result:
+        # result_json: {city: score, ...} -> [(city, score), ...] sıralı
+        rankings = sorted(last_result.result_json.items(), key=lambda x: -x[1])
+        # Consistency Ratio hesapla (son testin karşılaştırmalarından)
+        categories = list(Category.objects.values_list("id", flat=True))
+        n = len(categories)
+        comparisons = CategoryFuzzyComparison.objects.filter(user=request.user)
+        matrix = [[(1.0, 1.0, 1.0) for _ in range(n)] for _ in range(n)]
+        category_index = {cat.id: idx for idx, cat in enumerate(Category.objects.all().order_by("name"))}
+        for comp in comparisons:
+            i, j = category_index[comp.category1.id], category_index[comp.category2.id]
+            matrix[i][j] = (comp.value_l, comp.value_m, comp.value_u)
+            matrix[j][i] = (1/comp.value_u, 1/comp.value_m, 1/comp.value_l)
+        cr = calculate_consistency_ratio(matrix) if comparisons else None
     return render(request, "livability/ranked_cities.html", {"rankings": rankings, "consistency_ratio": cr})
 
 
 # User registration view
 def register(request):
+    from .forms import CustomUserCreationForm
+    from livability.models import UserProfile
     if request.method == "POST":
-        form = UserCreationForm(request.POST)
+        form = CustomUserCreationForm(request.POST)
         if form.is_valid():
-            form.save()
+            user = form.save()
+            city = form.cleaned_data['city']
+            UserProfile.objects.create(user=user, city=city)
             return redirect("login")
     else:
-        form = UserCreationForm()
+        form = CustomUserCreationForm()
     return render(request, "registration/register.html", {"form": form})
 
 def overall_list(request):
-    # Her kullanıcının son sıralamasını al
-    from livability.models import FuzzyWeight, CityLivabilityScore, Category
-    users = FuzzyWeight.objects.values_list('user', flat=True).distinct()
-    if not users:
-        return render(request, "livability/overall_list.html", {"rankings": None})
-
-    # Her kullanıcı için şehir skorlarını topla
-    city_scores = {}
-    for user_id in users:
-        # Kullanıcıya göre ağırlıkları al (defuzzify: l+m+u/3)
-        weights = {
-            fw.category.id: (fw.weight_l + fw.weight_m + fw.weight_u) / 3
-            for fw in FuzzyWeight.objects.filter(user_id=user_id)
-        }
-        total = sum(weights.values()) or 1
-        weights = {k: v / total for k, v in weights.items()}
-        # Şehir skorlarını topla
-        for entry in CityLivabilityScore.objects.select_related("category"):
-            if entry.category.id not in weights:
-                continue
-            score = entry.value * weights[entry.category.id]
-            city_scores.setdefault(entry.city_name, []).append(score)
-    # Ortalama skorları hesapla
-    avg_scores = {city: sum(scores)/len(scores) for city, scores in city_scores.items() if scores}
-    # Sırala
-    rankings = sorted(avg_scores.items(), key=lambda x: x[1], reverse=True)
+    from livability.models import OverallCityRanking
+    rankings = list(OverallCityRanking.objects.order_by('-avg_score').values_list('city_name', 'avg_score'))
+    if not rankings:
+        rankings = None
     return render(request, "livability/overall_list.html", {"rankings": rankings})
 
 
@@ -175,3 +225,62 @@ def load_scores_from_project_folder(request):
     from django.contrib import messages
     messages.success(request, "Excel dosyaları başarıyla yüklendi.")
     return redirect("livability:home")
+
+def tech_stack(request):
+    return render(request, "livability/tech_stack.html")
+
+def how_we_collect(request):
+    return render(request, 'livability/how_we_collect.html')
+
+@login_required
+def save_fuzzy_test_result(request):
+    """
+    Kullanıcı tüm karşılaştırmaları bitirdiğinde, TOPSIS skorunu hesapla ve UserTestResult'a kaydet.
+    """
+    if request.method == "POST":
+        # Sonuçları hesapla
+        rankings = apply_topsis(request.user)
+        city = None
+        try:
+            city = request.user.profile.city
+        except Exception:
+            pass
+        if rankings:
+            UserTestResult.objects.create(
+                user=request.user,
+                city=city or "",
+                result_json={city: float(score) for city, score in rankings}
+            )
+        return JsonResponse({"status": "ok"})
+    return JsonResponse({"status": "error"}, status=400)
+
+def city_category_detail(request):
+    # Same aggregation as index, but show all cities
+    from livability.models import UserProfile, FuzzyWeight, Category
+    city_category_top = []
+    all_cities = set(UserProfile.objects.values_list('city', flat=True))
+    categories = list(Category.objects.all().order_by('name'))
+    for city in sorted(all_cities):
+        users = UserProfile.objects.filter(city=city).values_list('user', flat=True)
+        if not users:
+            city_category_top.append({'city': city, 'categories': [], 'no_data': True})
+            continue
+        cat_weights = {cat.id: [] for cat in categories}
+        for user_id in users:
+            for fw in FuzzyWeight.objects.filter(user_id=user_id):
+                defuzz = (fw.weight_l + fw.weight_m + fw.weight_u) / 3
+                cat_weights[fw.category_id].append(defuzz)
+        cat_avg = []
+        for cat in categories:
+            vals = cat_weights[cat.id]
+            if vals:
+                avg = sum(vals) / len(vals)
+                cat_avg.append((cat.name, avg))
+        if cat_avg:
+            cat_avg = sorted(cat_avg, key=lambda x: -x[1])[:3]
+            city_category_top.append({'city': city, 'categories': cat_avg, 'no_data': False})
+        else:
+            city_category_top.append({'city': city, 'categories': [], 'no_data': True})
+    if not city_category_top:
+        city_category_top = None
+    return render(request, 'livability/city_category_detail.html', {'city_category_top': city_category_top})

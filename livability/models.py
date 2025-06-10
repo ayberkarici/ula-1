@@ -1,7 +1,6 @@
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.contrib.auth.models import User
-# 
 
 
 class Category(models.Model):
@@ -73,3 +72,30 @@ class FuzzyWeight(models.Model):
 
     def __str__(self):
         return f"{self.category.name} weight for {self.user.username if self.user else 'System'}"
+
+
+class UserProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    city = models.CharField(max_length=100)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.city}"
+
+
+class UserTestResult(models.Model):
+    user = models.ForeignKey('auth.User', on_delete=models.CASCADE)
+    city = models.CharField(max_length=100)
+    result_json = models.JSONField()  # {"city_name": score, ...}
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.city} - {self.created_at.strftime('%Y-%m-%d %H:%M')}"
+
+
+class OverallCityRanking(models.Model):
+    city_name = models.CharField(max_length=100, unique=True)
+    avg_score = models.FloatField(default=0)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.city_name}: {self.avg_score:.4f}"

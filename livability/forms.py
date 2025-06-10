@@ -1,5 +1,16 @@
 from django import forms
-from .models import CategoryFuzzyComparison, CityLivabilityScore
+from django.contrib.auth.forms import UserCreationForm
+from livability.models import CityLivabilityScore
+from .models import CategoryFuzzyComparison
+
+class CustomUserCreationForm(UserCreationForm):
+    city = forms.ChoiceField(label="Şehir", choices=[], required=True)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Benzersiz şehir isimlerini getir
+        cities = CityLivabilityScore.objects.values_list('city_name', flat=True).distinct()
+        self.fields['city'].choices = [(c, c) for c in sorted(cities)]
 
 class CategoryFuzzyComparisonForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):

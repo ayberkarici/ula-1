@@ -1,0 +1,35 @@
+{% extends "livability/base.html" %}
+{% block title %}Şehirlerin Kategori Öncelikleri - Detay{% endblock %}
+{% block content %}
+<div class="container py-5">
+  <h2 class="text-center mb-4">Tüm Şehirlerin Kategori Öncelikleri</h2>
+  <div class="row g-4 justify-content-center">
+    {% if city_category_top %}
+      {% for entry in city_category_top %}
+        <div class="col-12 col-md-4 col-lg-3">
+          <div class="card border-0 shadow-sm h-100 text-center p-3">
+            <div class="mb-2">
+              <img src="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f3d9.svg" alt="city" style="height: 36px;">
+              <span class="fw-bold ms-2">{{ entry.city }}</span>
+            </div>
+            {% if entry.no_data %}
+              <div class="text-muted mt-3">Henüz yeterli veri yok.</div>
+            {% else %}
+              <div class="d-flex flex-column align-items-center">
+                {% for cat, value in entry.categories %}
+                  <div class="mb-2">
+                    <span class="fw-bold">{{ cat }}</span>
+                    <div class="text-muted small">Öncelik Skoru: {{ value|floatformat:2 }}</div>
+                  </div>
+                {% endfor %}
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    {% else %}
+      <div class="col text-center text-muted">Henüz yeterli veri yok.</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

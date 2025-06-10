@@ -1,26 +1,65 @@
 {% extends "livability/base.html" %}
+{% load livability_extras %}
 {% block content %}
 <div class="container mt-5">
   <h2 class="text-center mb-4">Top Cities (Genel Sıralama)</h2>
   {% if rankings %}
+    <style>
+      .gradient-bar {
+        background: linear-gradient(90deg, #00c6ff, #0072ff);
+        animation: fillBar 1.4s ease forwards;
+      }
+      @keyframes fillBar {
+        from { width: 0%; }
+        to { width: var(--target-width); }
+      }
+      .top-1 { background: #ffe066 !important; font-weight: bold; font-size: 1.15em; }
+      .top-2 { background: #b5d5ff !important; font-weight: bold; }
+      .top-3 { background: #ffd6a5 !important; font-weight: bold; }
+    </style>
     <table class="table table-hover table-bordered shadow-sm">
       <thead class="table-light">
         <tr class="text-center">
           <th scope="col">Sıra</th>
           <th scope="col">Şehir</th>
           <th scope="col">TOPSIS Skoru</th>
+          <th scope="col">Görsel (%)</th>
         </tr>
       </thead>
       <tbody>
         {% for city, score in rankings %}
-        <tr class="text-center">
-          <td>{{ forloop.counter }}</td>
+        <tr class="text-center {% if forloop.counter == 1 %}top-1{% elif forloop.counter == 2 %}top-2{% elif forloop.counter == 3 %}top-3{% endif %}">
+          <td>
+            {% if forloop.counter == 1 %}🥇{% elif forloop.counter == 2 %}🥈{% elif forloop.counter == 3 %}🥉{% else %}{{ forloop.counter }}{% endif %}
+          </td>
           <td>{{ city }}</td>
           <td>{{ score|floatformat:4 }}</td>
+          <td>
+            <div class="progress" style="height: 20px;">
+              <div class="progress-bar gradient-bar" role="progressbar"
+                   style="min-width: 40px;"
+                   aria-valuenow="{{ score|mul:100|floatformat:2 }}" aria-valuemin="0" aria-valuemax="100"
+                   data-score="{{ score|mul:100|floatformat:2 }}">
+                {{ score|mul:100|floatformat:2 }}%
+              </div>
+            </div>
+          </td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
+    <script>
+      window.addEventListener("load", () => {
+        document.querySelectorAll(".progress-bar.gradient-bar").forEach(bar => {
+          const percent = parseFloat(bar.dataset.score);
+          if (!isNaN(percent)) {
+            bar.style.setProperty("width", percent + "%", "important");
+            bar.setAttribute("aria-valuenow", percent);
+            bar.textContent = percent + "%";
+          }
+        });
+      });
+    </script>
   {% else %}
     <div class="alert alert-warning text-center">
       Yeterli veri yok. Lütfen önce testi çözün.

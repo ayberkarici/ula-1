@@ -1,4 +1,5 @@
 {% extends "livability/base.html" %}
+{% load livability_extras %}
 {% block content %}
 <div class="container mt-5">
   <h2 class="text-center mb-4">Şehir Sıralaması (TOPSIS Sonuçları)</h2>
@@ -12,6 +13,9 @@
       {% if consistency_ratio > 0.2 %}
         <span class="ms-2 text-danger">(Yüksek! Sonuçlar güvenilir olmayabilir.)</span>
       {% endif %}
+      <div class="mt-2 text-secondary" style="font-size: 1rem;">
+        CR (Tutarlılık Oranı), yaptığınız ikili karşılaştırmaların ne kadar tutarlı olduğunu gösterir. 0.2'den büyükse, karşılaştırmalarınızda çelişki olabilir ve sonuçlar güvenilirliğini kaybedebilir.
+      </div>
     </div>
   {% endif %}
 
@@ -61,9 +65,10 @@
         <td>
           <div class="progress" style="height: 20px;">
             <div class="progress-bar gradient-bar" role="progressbar"
-                 style="--target-width: {{ score|floatformat:2|stringformat:'f' }}%;"
-                 aria-valuenow="{{ score|floatformat:2 }}" aria-valuemin="0" aria-valuemax="1">
-              {{ score|floatformat:2 }}
+                 style="min-width: 40px;"
+                 aria-valuenow="{{ score|mul:100|floatformat:2 }}" aria-valuemin="0" aria-valuemax="100"
+                 data-score="{{ score|mul:100|floatformat:2 }}">
+              {{ score|mul:100|floatformat:2 }}%
             </div>
           </div>
         </td>
@@ -82,11 +87,10 @@
 </div>
 <script>
   window.addEventListener("load", () => {
-    document.querySelectorAll(".js-score-bar").forEach(bar => {
-      const rawScore = parseFloat(bar.dataset.score);
-      if (!isNaN(rawScore)) {
-        const percent = (rawScore * 100).toFixed(2);
-        bar.style.width = percent + "%";
+    document.querySelectorAll(".js-score-bar, .progress-bar.gradient-bar").forEach(bar => {
+      const percent = parseFloat(bar.dataset.score);
+      if (!isNaN(percent)) {
+        bar.style.setProperty("width", percent + "%", "important");
         bar.setAttribute("aria-valuenow", percent);
         bar.textContent = percent + "%";
       }

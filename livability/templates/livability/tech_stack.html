@@ -1,0 +1,147 @@
+{% extends "livability/base.html" %}
+{% block title %}Kullandığımız Teknolojiler{% endblock %}
+{% block content %}
+<style>
+  .tech-title {
+    margin-bottom: 2.5rem;
+    font-size: 2.2rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+  .tech-section {
+    margin-bottom: 3.5rem;
+  }
+  .tech-card-list {
+    padding-left: 1.2rem;
+    margin-bottom: 0;
+  }
+  .tech-card-list li {
+    font-size: 1.08rem;
+    margin-bottom: 0.7rem;
+    font-style: italic;
+    border-left: 3px solid #0ff;
+    padding-left: 0.7rem;
+    font-weight: 500;
+    text-underline-offset: 3px;
+    transition: background 0.2s;
+  }
+  .tech-card-list li b {
+    font-size: 1.13rem;
+    font-style: normal;
+    text-decoration: underline;
+    font-weight: 700;
+  }
+  .tech-card-list li:last-child {
+    margin-bottom: 0;
+  }
+  .tech-card-header {
+    font-size: 1.18rem;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+    border-bottom: 1.5px solid #eee;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+  }
+  .tech-stack-icon {
+    margin-bottom: 1.1rem;
+  }
+  .tech-stack-section {
+    margin-bottom: 2.5rem;
+  }
+  .tech-alert {
+    margin-top: 2.5rem;
+    margin-bottom: 2.5rem;
+    font-size: 1.08rem;
+  }
+</style>
+<div class="container py-5">
+  <h2 class="text-center tech-title">Kullandığımız Teknolojiler</h2>
+  <div class="row g-4 justify-content-center tech-stack-section">
+    <div class="col-6 col-md-4 col-lg-3 text-center">
+      <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg" alt="Python" style="height: 60px;">
+      <h5 class="mt-2">Python</h5>
+      <p class="text-muted small">Backend ve veri işleme için ana programlama dili.</p>
+    </div>
+    <div class="col-6 col-md-4 col-lg-3 text-center">
+      <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/django/django-plain.svg" alt="Django" style="height: 60px; background: #fff; border-radius: 8px; padding: 6px;">
+      <h5 class="mt-2">Django</h5>
+      <p class="text-muted small">Web uygulaması çatısı, hızlı ve güvenli geliştirme için.</p>
+    </div>
+    <div class="col-6 col-md-4 col-lg-3 text-center">
+      <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/bootstrap/bootstrap-original.svg" alt="Bootstrap" style="height: 60px;">
+      <h5 class="mt-2">Bootstrap 5</h5>
+      <p class="text-muted small">Modern ve responsive arayüzler için CSS framework'ü.</p>
+    </div>
+    <div class="col-6 col-md-4 col-lg-3 text-center">
+      <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postgresql/postgresql-original.svg" alt="PostgreSQL" style="height: 60px;">
+      <h5 class="mt-2">PostgreSQL</h5>
+      <p class="text-muted small">Veri saklama ve sorgulama için güçlü veritabanı.</p>
+    </div>
+    <div class="col-6 col-md-4 col-lg-3 text-center">
+      <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/html5/html5-original.svg" alt="HTML5" style="height: 60px;">
+      <h5 class="mt-2">HTML5</h5>
+      <p class="text-muted small">Modern web sayfalarının iskeleti.</p>
+    </div>
+    <div class="col-6 col-md-4 col-lg-3 text-center">
+      <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/css3/css3-original.svg" alt="CSS3" style="height: 60px;">
+      <h5 class="mt-2">CSS3</h5>
+      <p class="text-muted small">Gelişmiş stiller ve animasyonlar için.</p>
+    </div>
+    <div class="col-6 col-md-4 col-lg-3 text-center">
+      <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/javascript/javascript-original.svg" alt="JavaScript" style="height: 60px;">
+      <h5 class="mt-2">JavaScript</h5>
+      <p class="text-muted small">Dinamik ve etkileşimli kullanıcı deneyimi için.</p>
+    </div>
+    <div class="col-6 col-md-4 col-lg-3 text-center">
+      <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/github/github-original.svg" alt="GitHub" style="height: 60px;">
+      <h5 class="mt-2">GitHub</h5>
+      <p class="text-muted small">Kod versiyonlama ve işbirliği için.</p>
+    </div>
+  </div>
+
+  <div class="row g-4 mb-5 tech-section">
+    <div class="col-md-6">
+      <div class="card border-info shadow-sm h-100 p-3">
+        <div class="card-header bg-info text-white fw-bold tech-card-header">F-AHP (Fuzzy Analytic Hierarchy Process) Adımları</div>
+        <div class="card-body">
+          <ol class="tech-card-list">
+            <li><b>Kriterlerin ve alt kriterlerin belirlenmesi</b></li>
+            <li><b>İkili karşılaştırmaların yapılması</b> <span style="font-size:0.98em;">(üçgen bulanık sayılarla)</span></li>
+            <li><b>Bulanık karşılaştırma matrisinin oluşturulması</b></li>
+            <li><b>Bulanık ağırlıkların hesaplanması</b></li>
+            <li><b>Normalizasyon ve ağırlık vektörü</b></li>
+            <li><b>Defuzzification</b> <span style="font-size:0.98em;">(bulanık ağırlıkların tek değere indirgenmesi)</span></li>
+          </ol>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card border-primary shadow-sm h-100 p-3">
+        <div class="card-header bg-primary text-white fw-bold tech-card-header">TOPSIS (Technique for Order Preference by Similarity to Ideal Solution)</div>
+        <div class="card-body">
+          <ol class="tech-card-list">
+            <li><b>Karar matrisinin oluşturulması ve normalizasyonu</b></li>
+            <li><b>Kriter ağırlıklarının uygulanması</b></li>
+            <li><b>İdeal ve anti-ideal çözümlerin belirlenmesi</b></li>
+            <li><b>Uzaklıkların hesaplanması</b> <span style="font-size:0.98em;">(ideal ve anti-ideale)</span></li>
+            <li><b>TOPSIS skoru ve sıralama</b></li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="row justify-content-center mb-5">
+    <div class="col-md-8">
+      <div class="alert alert-warning border-2 shadow-sm p-4 tech-alert">
+        <h5 class="fw-bold mb-2">Consistency Ratio (Tutarlılık Oranı) Nedir?</h5>
+        <p class="mb-1">F-AHP ve AHP yöntemlerinde, yapılan ikili karşılaştırmaların ne kadar tutarlı olduğunu ölçmek için Consistency Ratio (CR) kullanılır. CR değeri 0.1-0.2 aralığının üzerindeyse, karşılaştırmalarda çelişkiler olabilir ve sonuçlar güvenilirliğini kaybedebilir.</p>
+        <ul class="mb-0">
+          <li><b>CR &le; 0.1:</b> <span style="color:#198754; font-weight:600;">Çok iyi tutarlılık</span></li>
+          <li><b>0.1 &lt; CR &le; 0.2:</b> <span style="color:#ffc107; font-weight:600;">Kabul edilebilir tutarlılık</span></li>
+          <li><b>CR &gt; 0.2:</b> <span style="color:#dc3545; font-weight:600;">Tutarsızlık yüksek, karşılaştırmalar gözden geçirilmeli</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

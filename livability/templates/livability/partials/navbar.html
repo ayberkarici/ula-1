@@ -10,14 +10,33 @@
                     <div class="collapse navbar-collapse" id="navbarNavDropdown">
                         <ul class="navbar-nav">
                             <li class="nav-item">
-                                <a class="nav-link active" aria-current="page" href="#">Home</a>
+                                <a class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}" href="{% url 'livability:home' %}">Anasayfa</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" href="#">How we collect data?</a>
+                                <a class="nav-link {% if request.resolver_match.url_name == 'overall_list' %}active{% endif %}" href="{% url 'livability:overall_list' %}">Genel Sıralama</a>
+                            </li>
+                            {% if user.is_authenticated %}
+                                <li class="nav-item">
+                                    <a class="nav-link {% if request.resolver_match.url_name == 'show_ranked_cities' %}active{% endif %}" href="{% url 'livability:show_ranked_cities' %}">Benim Listem</a>
+                                </li>
+                            {% endif %}
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.resolver_match.url_name == 'city_category_detail' %}active{% endif %}" href="{% url 'livability:city_category_detail' %}">Şehir Kategori Öncelikleri</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" href="{% url 'livability:overall_list' %}">Overall List</a>
+                                <a class="nav-link {% if request.resolver_match.url_name == 'tech_stack' %}active{% endif %}" href="{% url 'livability:tech_stack' %}">Kullandığımız Teknolojiler</a>
                             </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.resolver_match.url_name == 'how_we_collect' %}active{% endif %}" href="{% url 'livability:how_we_collect' %}">Veri Toplama & Gizlilik</a>
+                            </li>
+                            {% if not user.is_authenticated %}
+                                <li class="nav-item">
+                                    <a class="nav-link {% if request.resolver_match.url_name == 'register' %}active{% endif %}" href="{% url 'register' %}">Kayıt Ol</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link {% if request.resolver_match.url_name == 'login' %}active{% endif %}" href="{% url 'login' %}">Giriş Yap</a>
+                                </li>
+                            {% endif %}
                         </ul>
                     </div>
                 </div>
