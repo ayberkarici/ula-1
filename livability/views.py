@@ -236,6 +236,7 @@ def how_we_collect(request):
 def save_fuzzy_test_result(request):
     """
     Kullanıcı tüm karşılaştırmaları bitirdiğinde, TOPSIS skorunu hesapla ve UserTestResult'a kaydet.
+    Ayrıca OverallCityRanking tablosunu günceller.
     """
     if request.method == "POST":
         # Sonuçları hesapla
@@ -251,6 +252,21 @@ def save_fuzzy_test_result(request):
                 city=city or "",
                 result_json={city: float(score) for city, score in rankings}
             )
+            # --- GENEL SIRALAMA AGGREGATE ---
+            from livability.models import UserTestResult, OverallCityRanking
+            from django.db.models import Avg
+            # Her şehir için tüm kullanıcıların son test skorlarının ortalamasını hesapla
+            latest_results = UserTestResult.objects.order_by('user', '-created_at').distinct('user')
+            city_scores = {}
+            for result in latest_results:
+                for c, score in result.result_json.items():
+                    city_scores.setdefault(c, []).append(score)
+            for c, scores in city_scores.items():
+                avg = sum(scores) / len(scores)
+                OverallCityRanking.objects.update_or_create(
+                    city_name=c,
+                    defaults={"avg_score": avg}
+                )
         return JsonResponse({"status": "ok"})
     return JsonResponse({"status": "error"}, status=400)
 
